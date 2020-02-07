@@ -15,9 +15,10 @@ namespace GetawayBot.Services
 		// returns card template if empty
 		public Attachment CreatePtoCard(PtoRequest ptoData)
 		{
+			var cardName = "approval-card";
 			var ptoDataString = JsonConvert.SerializeObject(ptoData);
 			// combine path for cross platform
-			var populatedCard = !string.IsNullOrEmpty(ptoDataString) ? PopulateCard(ptoDataString) : LoadCardTemplate("approvalCard");
+			var populatedCard = PopulateCard(ptoDataString, cardName);
 
 			var adaptiveCardAttachment = new Attachment()
 			{
@@ -27,9 +28,12 @@ namespace GetawayBot.Services
 			return adaptiveCardAttachment;
 		}
 
-		private string PopulateCard(string cardJson)
+		private string PopulateCard(string cardJson, string templateName)
 		{
-			var templateJson = LoadCardTemplate("approvalCard");
+			// return template if no data
+			if (string.IsNullOrEmpty(cardJson)) return LoadCardTemplate(templateName);
+
+			var templateJson = LoadCardTemplate(templateName);
 			var transformer = new AdaptiveTransformer();
 			var populatedCard = transformer.Transform(templateJson, cardJson);
 			return populatedCard;

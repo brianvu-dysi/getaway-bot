@@ -1,0 +1,144 @@
+{
+  "type": "AdaptiveCard",
+  "body": [
+    {
+      "type": "Container",
+      "style": "emphasis",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "size": "Large",
+                  "weight": "Bolder",
+                  "text": "**PTO APPROVAL**"
+                }
+              ],
+              "width": "stretch"
+            },
+            {
+              "type": "Column",
+              "items": [
+                {
+                  "type": "Image",
+                  "url": "https://adaptivecards.io/content/pending.png",
+                  "altText": "Pending",
+                  "height": "30px"
+                }
+              ],
+              "width": "auto"
+            }
+          ]
+        }
+      ],
+      "bleed": true
+    },
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "ColumnSet",
+          "columns": [
+            {
+              "type": "Column",
+              "items": [
+                {
+                  "type": "TextBlock",
+                  "size": "ExtraLarge",
+                  "text": "{employeeName}",
+                  "wrap": true
+                },
+                {
+                  "type": "TextBlock",
+                  "spacing": "Small",
+                  "size": "Small",
+                  "weight": "Bolder",
+                  "color": "Accent",
+                  "text": "[View Request](https://getaway.dsinitech.us/member/page/716bcf1e-e4ae-4638-9fd6-9a72173d6e8e)"
+                }
+              ],
+              "width": "stretch"
+            }
+          ]
+        },
+        {
+          "type": "FactSet",
+          "spacing": "Large",
+          "facts": [
+            {
+              "title": "Start Date",
+              "value": "{startDate}"
+            },
+            {
+              "title": "End Date",
+              "value": "{endDate}"
+            },
+            {
+              "title": "PTO Type",
+              "value": "{ptoType}"
+            },
+            {
+              "title": "Comments",
+              "value": "{comments}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Container",
+      "items": [
+        {
+          "type": "ActionSet",
+          "actions": [
+            {
+              "type": "Action.Submit",
+              "title": "Approve",
+              "style": "positive",
+              "data": {
+                "id": "{id}",
+                "action": "approve",
+                "employeeName": "{employeeName}",
+                "employeeUserId": "{employeeUserId}",
+                "employeeEmail": "{employeeEmail}",
+                "managerName": "{managerName}",
+                "managerUserId": "{managerUserId}",
+                "managerEmail": "{managerEmail}",
+                "ptoType": "{ptoType}",
+                "startDate": "{startDate}",
+                "endDate": "{endDate}",
+                "comments": "{comments}"
+              }
+            },
+            {
+              "type": "Action.Submit",
+              "title": "Reject",
+              "style": "destructive",
+              "data": {
+                "id": "{id}",
+                "action": "reject",
+                "employeeName": "{employeeName}",
+                "employeeUserId": "{employeeUserId}",
+                "employeeEmail": "{employeeEmail}",
+                "managerName": "{managerName}",
+                "managerUserId": "{managerUserId}",
+                "managerEmail": "{managerEmail}",
+                "ptoType": "{ptoType}",
+                "startDate": "{startDate}",
+                "endDate": "{endDate}",
+                "comments": "{comments}"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "version": "1.2",
+  "fallbackText": "This card requires Adaptive Cards v1.2 support to be rendered properly."
+}
