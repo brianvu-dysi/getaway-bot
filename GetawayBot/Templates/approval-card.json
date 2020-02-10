@@ -19,18 +19,6 @@
                 }
               ],
               "width": "stretch"
-            },
-            {
-              "type": "Column",
-              "items": [
-                {
-                  "type": "Image",
-                  "url": "https://adaptivecards.io/content/pending.png",
-                  "altText": "Pending",
-                  "height": "30px"
-                }
-              ],
-              "width": "auto"
             }
           ]
         }

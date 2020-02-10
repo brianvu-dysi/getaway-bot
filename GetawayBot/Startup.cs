@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using GetawayBot;
 using GetawayBot.Bots;
@@ -25,6 +26,8 @@ namespace Getaway
 		// This method gets called by the runtime. Use this method to add services to the container.
 		public void ConfigureServices(IServiceCollection services)
 		{
+			services.AddApplicationInsightsTelemetry();
+
 			services.AddSingleton<ConcurrentDictionary<string, ConversationReference>>();
 
 			// Create the Bot Framework Adapter with error handling enabled.
@@ -46,10 +49,7 @@ namespace Getaway
 			{
 				app.UseDeveloperExceptionPage();
 			}
-			
-			app.UseDefaultFiles();
-			
-			app.UseStaticFiles();
+			app.UseHttpsRedirection();
 			
 			app.UseWebSockets();
 

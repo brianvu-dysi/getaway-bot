@@ -5,12 +5,14 @@ using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -22,6 +24,7 @@ namespace GetawayBot.Controllers
     {
 		private readonly ICardService _service;
 		private readonly IBotFrameworkHttpAdapter _adapter;
+		private readonly ILogger<PtoController> _logger;
 		private readonly ConcurrentDictionary<string, ConversationReference> _conversationReferences;
 		private PtoRequest _currentRequest;
 		private readonly string _appId;
@@ -29,11 +32,13 @@ namespace GetawayBot.Controllers
 		private readonly string _baseApiUrl;
 
 		public PtoController(ICardService service, IBotFrameworkHttpAdapter adapter, IConfiguration configuration,
-		ConcurrentDictionary<string, ConversationReference> conversationReferences)
+		ConcurrentDictionary<string, ConversationReference> conversationReferences, ILogger<PtoController> logger)
 		{
+			ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
 			_service = service;
 			_adapter = adapter;
 			_conversationReferences = conversationReferences;
+			_logger = logger;
 			_appId = configuration["MicrosoftAppId"];
 			_bearerToken = configuration["DysiBearerToken"];
 			_baseApiUrl = configuration["BaseApiUrl"];
@@ -50,6 +55,7 @@ namespace GetawayBot.Controllers
 		[HttpGet]
         public IActionResult Get()
         {
+			_logger.LogInformation("Health check request received.");
 			return new OkObjectResult(new { status = "OK" });
         }
 
@@ -61,41 +67,41 @@ namespace GetawayBot.Controllers
 		[HttpPost]
 		public async Task<IActionResult> PostAsync([FromBody] PtoRequest pto)
 		{
+			_logger.LogInformation("Pto request received.", pto);
+			_currentRequest = pto;
+
+			// make api calls to get email address
 			try
 			{
-				_currentRequest = pto;
-				// make api calls to get email address
 				var restClient = new RestClient(_baseApiUrl);
-
-				var userRequest = new RestRequest($"user/{pto.EmployeeUserId}");
-				userRequest.AddHeader("Authorization", $"Bearer {_bearerToken}");
-				var userResponse = await restClient.ExecuteAsync(userRequest, Method.GET);
-				var userEmail = JObject.Parse(userResponse.Content)["email"].ToString();
-				pto.EmployeeEmail = userEmail;
-
-				var managerRequest = new RestRequest($"user/{pto.ManagerUserId}");
+				var managerRequest = new RestRequest($"user/{pto.ManagerUserId}", DataFormat.Json);
 				managerRequest.AddHeader("Authorization", $"Bearer {_bearerToken}");
 				var managerResponse = await restClient.ExecuteAsync(managerRequest, Method.GET);
 				var managerEmail = JObject.Parse(managerResponse.Content)["email"].ToString();
 				pto.ManagerEmail = managerEmail;
-
-				// find approprivate personal conversation
-				var personalManagerConversation = _conversationReferences.Values.FirstOrDefault(
-					x => x.User.Properties["upn"].ToString().ToLower() == pto.ManagerEmail.ToLower()
-					&& x.Conversation.ConversationType == "personal");
-
-				// don't do anything if no manager found
-				if (personalManagerConversation == null) return new NotFoundResult();
-
-				await ((BotAdapter)_adapter).ContinueConversationAsync(_appId, personalManagerConversation, CreatePtoCard, default);
-
-				// posts the complete results back to the page
-				return new OkObjectResult(pto);
 			}
-			catch (Exception ex)
+			catch(Exception ex)
 			{
-				throw ex;
+				_logger.LogError("Unable to find manager");
+				return new BadRequestObjectResult(pto);
 			}
+
+			// find approprivate personal conversation
+			var personalManagerConversation = _conversationReferences.Values.FirstOrDefault(
+				x => x.User.Properties["upn"].ToString().ToLower() == pto.ManagerEmail.ToLower()
+				&& x.Conversation.ConversationType == "personal");
+
+			_logger.LogInformation("Manager found.", personalManagerConversation.User.Name);
+
+			// don't do anything if no manager found
+			if (personalManagerConversation == null) return new NotFoundResult();
+
+			await ((BotAdapter)_adapter).ContinueConversationAsync(_appId, personalManagerConversation, CreatePtoCard, default);
+
+			_logger.LogInformation("Adaptive card sent.");
+
+			// posts the complete results back to the page
+			return new OkObjectResult(pto);
 		}
 
 		private async Task CreatePtoCard(ITurnContext turnContext, CancellationToken cancellationToken)
